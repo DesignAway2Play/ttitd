@@ -8,13 +8,13 @@ from django.dispatch import receiver
 # Create your models here.
 
 class Profile(models.Model):
-    user_key = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_name = models.CharField(max_length=100)
-    location = models.CharField(max_length=200)
-    gender = models.CharField(max_length=15)
+    user_key = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
+    profile_name = models.CharField(max_length=100, default="New User")
+    location = models.CharField(max_length=200, blank=True)
+    gender = models.CharField(max_length=15, blank=True)
     age = models.IntegerField(default=0)
     weight = models.IntegerField(default=0)
-    bio = models.TextField(max_length=250)
+    bio = models.TextField(max_length=250, blank=True)
     social_link = models.URLField('website', blank=True)
     exp = models.IntegerField(default=0)
     ghost_key = models.BooleanField(default=False)
@@ -23,7 +23,7 @@ class Profile(models.Model):
     @receiver(post_save, sender=User)
     def create_user_profile(sender, instance, created, **kwargs):
         if created:
-            Profile.objects.create(user_key=user.id, profile_name=instance.get_username)
+            Profile.objects.create(user_key=instance)
 
     @receiver(post_save, sender=User)
     def save_user_profile(sender, instance, **kwargs):
@@ -45,7 +45,6 @@ class Drug(models.Model):
     def __str__(self):
         return self.name
 
-#class Experince(models.Model):
 
 class Effect(models.Model):
     name = models.CharField(max_length=50)
@@ -65,17 +64,16 @@ class Photo(models.Model):
     def __str__(self):
         return f"Photo for drug_id: at {self.drug_id} @{self.url}"
 
-
 class Trip_Report(models.Model):
     trip_name = models.CharField(max_length=50)
-    METHODS = Choices('ediable', 'smoked', 'oil/lotion', 'other')
-    OTHER_DRUGS = Choices('Alcohol', 'Cannabis', 'Mushrooms', 'Payote')
+    METHODS = Choices('edible', 'smoked', 'oil/lotion', 'other')
+    OTHER_DRUGS = Choices('Alcohol', 'Cannabis', 'Mushrooms', 'Peyote')
     user_key = models.ForeignKey(User, on_delete=models.CASCADE)
     drug_key = models.ForeignKey(Drug, on_delete=models.CASCADE)
     text_content = models.TextField(max_length=250)
     date = models.DateField()
-    method = models.CharField(max_length=1, choices=METHODS)
-    other_drugs_taken = models.CharField(max_length= 4, choices=OTHER_DRUGS)
+    method = models.CharField(max_length=250, choices=METHODS)
+    other_drugs_taken = models.CharField(max_length=250, choices=OTHER_DRUGS)
     effects = models.ManyToManyField(User_Drug_Effects)
 
 class Report_Cat(models.Model):
@@ -88,3 +86,17 @@ class Report_Comment(models.Model):
     trip_report_key = models.ForeignKey(Trip_Report, on_delete=models.CASCADE)
     user_key = models.ForeignKey(User, on_delete=models.CASCADE)
     text_content = models.TextField(max_length=200)
+
+class TripReportPhoto(models.Model):
+    url = models.CharField(max_length=200)
+    trip_report = models.ForeignKey(Trip_Report, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Photo for trip_id: at {self.trip_report_id} @{self.url}"
+
+class ProfilePhoto(models.Model):
+    url = models.CharField(max_length=200, default='https://www.fillmurray.com/200/300')
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Photo for profile: at {self.profile.id} @{self.url}"
